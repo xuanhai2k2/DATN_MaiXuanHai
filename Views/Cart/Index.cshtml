@@ -1,0 +1,265 @@
+﻿@{
+    Layout = "~/Views/Shared/LayoutTrangChu.cshtml";
+}
+@using devpro_project.Models
+<!--shopping cart area start -->
+@functions{
+    MyDbContext db = new MyDbContext();
+    public List<ItemProduct> GetProducts()
+    {
+        var result = db.Products.OrderByDescending(item => item.Id).ToList();
+        return result;
+    }
+}
+<div class="shopping_cart_area">
+    @if (!String.IsNullOrEmpty(Context.Request.Query["notify"]))
+    {
+        if(Context.Request.Query["notify"] == "destroy-success")
+        {
+            <h2 style="text-align:center">Đã xóa toàn bộ sản phẩm trong giỏ hàng!</h2>
+        }
+        if (Context.Request.Query["notify"] == "checkout-success")
+        {
+            <h2 style="text-align:center">Đã thanh toán giỏ hàng thành công!</h2>
+        }
+        
+    }
+    @if (Model.Count > 0)
+    {
+        <form action="/Cart/Update" method="post">
+            <div class="row">
+                <div class="col-12">
+                    <div class="table_desc">
+                        <div class="cart_page table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th class="product_remove">Delete</th>
+                                        <th class="product_thumb">Image</th>
+                                        <th class="product_name">Product</th>
+                                        <th class="product-price">Price</th>
+                                        <th class="product_quantity">Quantity</th>
+                                        <th class="product_total">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (Item item_cart in Model)
+                                    {
+                                        <tr>
+                                            <td class="product_remove"><a href="/Cart/Remove/@item_cart.ProductRecord.Id"><i class="fa fa-trash-o"></i></a></td>
+                                            <td class=""><a href="#"><img src="~/Upload/Products/@item_cart.ProductRecord.Photo" width="100px" alt=""></a></td>
+                                            <td class="product_name"><a href="/Products/Detail">@item_cart.ProductRecord.Name</a></td>
+                                            <td class="product-price">£@(item_cart.ProductRecord.Price - (item_cart.ProductRecord.Price * item_cart.ProductRecord.Discount) / 100)</td>
+                                            <td class="product_quantity"><input name="product_@item_cart.ProductRecord.Id" min="0" max="100" value="@item_cart.Quantity" type="number"></td>
+                                            <td class="product_total">£@(item_cart.Quantity * (item_cart.ProductRecord.Price - (item_cart.ProductRecord.Price * item_cart.ProductRecord.Discount) / 100))</td>
+                                        </tr>
+                                                                    
+                                    }
+
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="cart_submit">
+                            <button type="submit">update cart</button>
+                            <button formaction="/Cart/Destroy" style="float:left">Clear shopping cart</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--coupon code area start-->
+            
+            <div class="coupon_area">
+                <div class="row">
+
+                    <div class="col-lg-6 col-md-6">
+                        <div class="form-group">
+                            <label>Họ tên khách hàng</label>
+                            <input type="text" name="CustomerName" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Số diện thoại</label>
+                            <input type="text" name="Phone" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Địa chỉ</label>
+                            <input type="text" name="Address" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="text" name="Email" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Hình thức thanh toán</label>
+                            <select class="form-control" name="Payment">
+                               <option value="COD">COD</option>
+                                <option value="Bank">Chuyển khoản</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <input type="submit" name="payment" class="btn btn-dark btn-block" style="height: 50px; color: white; background-color: black; text-transform: uppercase;font-weight: bold" value="Đặt hàng (COD)" />
+                            <button formaction="/Cart/CheckOutVnPay" name="payment" class="btn btn-dark btn-block" style="height: 50px; color: white; background-color: black; text-transform: uppercase;font-weight: bold" >Thanh toán VnPay</button>
+                        </div>
+                    </div>
+
+                    @* <div class="col-lg-6 col-md-6">
+                        <div class="form-bank" style="margin-bottom:20px;">
+                            <div id="getpost"></div>
+                        </div>
+
+                        <div class="form-bank">
+                            <div class="form-bank-tit">Nhập thông tin để nhận mã QR thanh toán</div>
+                            <form method="post">
+                                <input id="name" placeholder="Nhập tên của bạn" value="">
+                                <input type="number" id="money" placeholder="Nhập số tiền" value="@Cart.CartTotal(Context.Session)">
+                                <textarea id="note" placeholder="Nhập nội dung"></textarea>
+                                <a href="#" onclick="bank()">Tạo mã QR</a>
+                            </form>
+
+                            <div class="checkout_btn">
+                                <a href="/Cart/CheckOut" onclick="checkout()">Proceed to Checkout</a>
+                            </div>
+                        </div>
+                    </div> *@
+                </div>
+            </div>
+            <!--coupon code area end-->
+        </form>
+    }
+    else
+    {
+        <h2 style="text-align:center">Chưa có sản phẩm trong giỏ hàng!</h2>
+    }
+
+</div>
+
+<!--shopping cart area end -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+<script>
+    var citis = document.getElementById("city");
+    var districts = document.getElementById("district");
+    var wards = document.getElementById("ward");
+    var Parameter = {
+        url: "https://raw.githubusercontent.com/Duchieu7802/dataVN/main/data.json",
+        method: "GET",
+        responseType: "json",
+    };
+    var promise = axios(Parameter);
+    promise.then(function (result) {
+        console.log(result);
+        citis.setAttribute("style", "display:block");
+
+
+        renderCity(result.data);
+    });
+    function renderCity(data) {
+        for (var x of data) {
+            citis.options[citis.options.length] = new Option(x.Name, x.Id);
+            console.log(citis);
+        }
+        districts.setAttribute("style", "display:block");
+        citis.onchange = function () {
+            district.length = 1;
+            ward.length = 1;
+            if (this.value != "") {
+                const result = data.filter(n => n.Id === this.value);
+
+                for (const k of result[0].Districts) {
+                    district.options[district.options.length] = new Option(k.Name, k.Id);
+                    console.log(district);
+                }
+            }
+        };
+        wards.setAttribute("style", "display:block");
+        district.onchange = function () {
+            ward.length = 1;
+            const dataCity = data.filter((n) => n.Id === citis.value);
+            if (this.value != "") {
+                const dataWards = dataCity[0].Districts.filter(n => n.Id === this.value)[0].Wards;
+
+                for (const w of dataWards) {
+                    wards.options[wards.options.length] = new Option(w.Name, w.Id);
+                }
+            }
+        };
+    }
+
+</script>
+
+<script>
+
+</script>
+<script>
+    function bank() {
+        var name = document.getElementById("name").value;
+        var money = document.getElementById("money").value;
+        var note = document.getElementById("note").value;
+        if (name != "" && money != "" && note != "") {
+            const formatCash = n => {
+                if (n < 1e3) return n;
+                if (n >= 1e3 && n < 1e6) return +(n / 1e3).toFixed(2) + " nghìn";
+                if (n >= 1e6 && n < 1e9) return +(n / 1e6).toFixed(2) + " triệu";
+                if (n >= 1e9 && n < 1e12) return +(n / 1e9).toFixed(2) + " tỷ";
+                if (n >= 1e12) return +(n / 1e12).toFixed(1) + " ngàn tỷ";
+            };
+            document.getElementById("getpost").innerHTML = "Tên của bạn: " + name + "<br> Số tiền: " + formatCash(money) + "<br> Nội dung: " + note + "<br> <img src='https://img.vietqr.io/image/970422-0964608075-print.png?amount=" + money + "&addInfo=" + note + "&accountName=Hoang Duc Hieu'>";
+        }
+        else {
+            document.getElementById("getpost").innerHTML = "Chưa có nội dung";
+        }
+    }
+    // cho phep note toi da 50 ky tu
+    const textarea = document.getElementById('note');
+    textarea.addEventListener('input', () => {
+        const maxLength = 50;
+        const currentLength = textarea.value.length;
+
+        if (currentLength > maxLength) {
+            textarea.value = textarea.value.substring(0, maxLength);
+        }
+    });
+</script>
+<style>
+    .form-bank {
+        margin: auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        background: #fff;
+    }
+
+    .form-bank-tit {
+        font-weight: bold;
+        font-size: 25px;
+        margin-bottom: 20px;
+    }
+
+    .form-bank input, .form-bank textarea {
+        width: 100%;
+        padding: 7px;
+        border: 1px solid #ddd;
+        margin-bottom: 10px;
+        border-radius: 10px;
+    }
+
+    .form-bank textarea {
+        height: 100px;
+    }
+
+    .form-bank a {
+        margin-top: 10px;
+        display: block;
+        background: #333;
+        color: #fff;
+        text-align: center;
+        box-sizing: border-box;
+        padding: 10px;
+        border-radius: 10px;
+        width: 100%;
+        text-decoration: none;
+    }
+
+    .form-bank img {
+        width: 100%;
+        margin-top: 30px;
+    }
+</style>

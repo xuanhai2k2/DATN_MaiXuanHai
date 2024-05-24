@@ -1,0 +1,43 @@
+﻿@{
+    Layout = "~/Areas/Admin/Views/Shared/Layout.cshtml";
+    
+}
+
+<h2>Admin Page: @ViewBag.sum1</h2>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<canvas id="myChart" style="width:100%;max-width:1000px">
+    </canvas>
+<script>
+    const ctx = document.getElementById('myChart');
+    var data1 = @ViewBag.sum1;
+    var data2 = @ViewBag.sum2;
+    var data3 = @ViewBag.sum3;
+    var data4 = @ViewBag.sum4;
+    var data5 = @ViewBag.sum5;
+    var data6 = @ViewBag.sum6;
+    var data7 = @ViewBag.sum7;
+    var data8 = @ViewBag.sum8;
+    var data9 = @ViewBag.sum9;
+    var data10 = @ViewBag.sum10;
+    var data11= @ViewBag.sum11;
+    var data12 = @ViewBag.sum12;
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['January ', 'February ', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+            datasets: [{
+                label: '# of Votes',
+                data: [100, data2, data3, data4, data5, data6, data7, data8, data9, data10, data11, data12],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
